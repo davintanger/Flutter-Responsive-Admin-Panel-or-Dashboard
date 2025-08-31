@@ -67,15 +67,10 @@ jobs:
           echo "::notice::Provisioning profile installed with UUID: $UUID"
       - name: Build for iOS (IPA)
         run: |
-          flutter build ipa --release --no-codesign
-      - name: Export IPA from Archive
-        run: |
-          xcodebuild -exportArchive \
-            -archivePath build/ios/archive/Runner.xcarchive \
-            -exportPath build/ios/ipa \
-            CODE_SIGN_STYLE=Manual
+          flutter build ios --release --no-codesign
+ 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: ios-app
-          path: build/ios/ipa/Runner.ipa
+          path: build/ios/iphoneos/Runner.app
