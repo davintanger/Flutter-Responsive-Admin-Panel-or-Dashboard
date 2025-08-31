@@ -67,10 +67,9 @@ jobs:
           echo "::notice::Provisioning profile installed with UUID: $UUID"
       - name: Build for iOS (IPA)
         run: |
-          flutter build ios --release --no-codesign
- 
+          flutter build ios --simulator --release
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: ios-app
-          path: build/ios/iphoneos/Runner.app
+          path: build/ios/iphonesimulator/Runner.app
