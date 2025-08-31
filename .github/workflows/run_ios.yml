@@ -73,7 +73,6 @@ jobs:
           xcodebuild -exportArchive \
             -archivePath build/ios/archive/Runner.xcarchive \
             -exportPath build/ios/ipa \
-            -exportOptionsPlist ios/ExportOptions.plist \
             CODE_SIGN_STYLE=Manual
       - name: Upload IPA
         uses: actions/upload-artifact@v4
