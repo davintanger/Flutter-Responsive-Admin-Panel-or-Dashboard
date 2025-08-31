@@ -67,7 +67,7 @@ jobs:
           echo "::notice::Provisioning profile installed with UUID: $UUID"
       - name: Build for iOS (IPA)
         run: |
-          flutter build ios --simulator --release
+          flutter build ios --simulator --debug
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
