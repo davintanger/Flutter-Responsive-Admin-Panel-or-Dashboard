@@ -37,11 +37,34 @@ jobs:
         run: security find-identity -v -p codesigning
 
       - name: Install Provisioning Profile
+        id: install_profile
         run: |
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles/
-          echo "${{ secrets.PROVISIONING_PROFILE_BASE64 }}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/your_profile.mobileprovision
-          /usr/libexec/PlistBuddy -c 'Print UUID' /dev/stdin < <(security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/your_profile.mobileprovision)
-
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          
+          echo "Decoding provisioning profile..."
+          if ! echo "${{ secrets.PROVISIONING_PROFILE_BASE64 }}" | base64 --decode > "$HOME/Library/MobileDevice/Provisioning Profiles/profile.mobileprovision"; then
+            echo "::error::Failed to decode provisioning profile"
+            exit 1
+          fi
+          
+          echo "Verifying file..."
+          if [ ! -s "$HOME/Library/MobileDevice/Provisioning Profiles/profile.mobileprovision" ]; then
+            echo "::error::Provisioning profile is empty or invalid"
+            exit 1
+          fi
+          
+          echo "Extracting UUID..."
+          UUID=$(/usr/libexec/PlistBuddy -c 'Print UUID' /dev/stdin <<< $(security cms -D -i "$HOME/Library/MobileDevice/Provisioning Profiles/profile.mobileprovision" 2>/dev/null || echo ""))
+          
+          if [ -z "$UUID" ]; then
+            echo "::error::Invalid provisioning profile (could not extract UUID)"
+            echo "File header:"
+            head -c 100 "$HOME/Library/MobileDevice/Provisioning Profiles/profile.mobileprovision" | hexdump -C
+            exit 1
+          fi
+          
+          echo "UUID=$UUID" >> $GITHUB_ENV
+          echo "::notice::Provisioning profile installed with UUID: $UUID"
       - name: Build for iOS (IPA)
         run: |
           flutter build ipa --release \
