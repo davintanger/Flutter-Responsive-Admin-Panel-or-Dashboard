@@ -25,12 +25,16 @@ jobs:
         run: |
           cd ios
           pod install
-      
-      - name: Build for iOS Simulator
-        run: flutter build ios --simulator --release
-
-      - name: Upload Simulator App
+      - name: Import Apple Code Signing Certificates
+        uses: apple-actions/import-codesign-certs@v1
+        with:
+          p12-file-base64: ${{ secrets.P12_BASE64 }}
+          p12-password: ${{ secrets.P12_PASSWORD }}
+          provisioning-profile-base64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }} 
+      - name: Build for iOS (IPA)
+        run: flutter build ipa --release
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: ios-app
-          path: build/ios/iphonesimulator/Runner.app
+          path: build/ios/ipa/Runner.ipa
