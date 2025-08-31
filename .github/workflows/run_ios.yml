@@ -68,7 +68,13 @@ jobs:
       - name: Build for iOS (IPA)
         run: |
           flutter build ipa --release --no-codesign
-
+      - name: Export IPA from Archive
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath build/ios/archive/Runner.xcarchive \
+            -exportPath build/ios/ipa \
+            -exportOptionsPlist ios/ExportOptions.plist \
+            CODE_SIGN_STYLE=Manual
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
