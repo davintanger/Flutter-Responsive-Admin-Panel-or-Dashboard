@@ -27,7 +27,7 @@ jobs:
           pod install
 
       - name: Build for iOS Simulator
-        run: flutter build ios --simulator --debug
+        run: flutter build ipa --no-codesign
 
       - name: Upload Simulator App
         uses: actions/upload-artifact@v4
