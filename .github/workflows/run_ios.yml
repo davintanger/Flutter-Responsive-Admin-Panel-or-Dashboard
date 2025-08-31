@@ -1,4 +1,4 @@
-name: Build Flutter iOS  App
+name: Build Flutter iOS App
 
 on:
   push:
@@ -6,7 +6,6 @@ on:
   workflow_dispatch:  
 
 jobs:
-  
   build-ios-simulator:
     runs-on: macos-latest  
     steps:
@@ -25,17 +24,35 @@ jobs:
         run: |
           cd ios
           pod install
+
       - name: Import Apple Code Signing Certificates
-        uses: apple-actions/import-codesign-certs@v1
+        uses: apple-actions/import-codesign-certs@v2
         with:
           p12-file-base64: ${{ secrets.P12_BASE64 }}
           p12-password: ${{ secrets.P12_PASSWORD }}
-      - name: Install Provisioning Profile (Manual)
+          keychain: temp-build-keychain
+          create-keychain: true
+
+      - name: Verify Keychain Contents
+        run: security find-identity -v -p codesigning
+
+      - name: Install Provisioning Profile
         run: |
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles/
-          echo "${{ secrets.PROVISIONING_PROFILE_BASE64 }}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+          echo "${{ secrets.PROVISIONING_PROFILE_BASE64 }}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/your_profile.mobileprovision
+          /usr/libexec/PlistBuddy -c 'Print UUID' /dev/stdin < <(security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/your_profile.mobileprovision)
+
       - name: Build for iOS (IPA)
-        run: flutter build ipa --release
+        run: |
+          flutter build ipa --release \
+            --dart-define=FLUTTER_BUILD_MODE=release \
+            --dart-define=FLUTTER_BUILD_NAME=1.0.0 \
+            --dart-define=FLUTTER_BUILD_NUMBER=1
+        env:
+          CODE_SIGN_STYLE: Manual
+          PROVISIONING_PROFILE_SPECIFIER: $(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/your_profile.mobileprovision))
+          DEVELOPMENT_TEAM: ${{ secrets.DEV_TEAM_ID }}
+
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
